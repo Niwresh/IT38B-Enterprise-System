@@ -20,5 +20,12 @@ Buseco improves their operational work efficiency, make their manual processess 
 
 https://buseco.coop/
 
-C. Case 2:  Failed Enterprise System Implementation
+C. case study 2: Failed Enterprise System Implementation
+Nike is an American company that develops, designs and sells many kinds of different apparells, especially they are famous in selling SHOES. 
+
+
+C.1: Nike primarily implements ERP system to make an improvement in their company's sales and supply chain in order for them to improve their global connection and improve sales online and streamline.
+
+C.2: 
+
 
