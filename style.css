@@ -1,0 +1,60 @@
+/* General Styling */
+body {
+    font-family: Arial, sans-serif;
+}
+
+h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.dashboard-container {
+    margin-top: 20px;
+}
+
+.stats-cards {
+    display: flex;
+    justify-content: space-between;
+}
+
+.card {
+    background-color: #f1f1f1;
+    padding: 20px;
+    border-radius: 8px;
+    width: 30%;
+    text-align: center;
+}
+
+.card h3 {
+    font-size: 18px;
+}
+
+.card p {
+    font-size: 22px;
+}
+
+/* Table Styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+/* Button Styling */
+a {
+    text-decoration: none;
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    margin-right: 10px;
+}
