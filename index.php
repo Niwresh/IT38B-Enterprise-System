@@ -1,78 +1,81 @@
+<?php
+// Include the database connection
+require_once 'config/database.php';
+
+// Include the model to interact with the database (if necessary)
+require_once 'models/customerModel.php';
+
+// Fetch customers (example)
+$customers = getCustomers(); // This function is from the customerModel.php, assuming it fetches customers from the database
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register & Login</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>CRM - Customer Management</title>
     <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <div class="container" id="signup" style="display:none;">
-      <h1 class="form-title">Register</h1>
-      <form method="POST" action="register.php">
-    <label for="Fname">First Name:</label>
-    <input type="text" name="Fname" id="Fname" required>
-    <br>
 
-    <label for="Lname">Last Name:</label>
-    <input type="text" name="Lname" id="Lname" required>
-    <br>
+    <!-- Header Section -->
+    <header>
+        <h1>Customer Relationship Management</h1>
+        <nav>
+            <ul>
+                <li><a href="index.php">Home</a></li>
+                <li><a href="add_customer.php">Add Customer</a></li>
+                <li><a href="login.php">Login</a></li>
+                <li><a href="register.php">Register</a></li>
+            </ul>
+        </nav>
+    </header>
 
-    <label for="email">Email:</label>
-    <input type="email" name="email" id="email" required>
-    <br>
+    <!-- Main Section -->
+    <main>
+        <h2>Customer List</h2>
 
-    <label for="password">Password:</label>
-    <input type="password" name="password" id="password" required>
-    <br>
+        <!-- Customer Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (count($customers) > 0): ?>
+                    <?php foreach ($customers as $customer): ?>
+                        <tr>
+                            <td><?php echo $customer['id']; ?></td>
+                            <td><?php echo $customer['first_name'] . ' ' . $customer['last_name']; ?></td>
+                            <td><?php echo $customer['email']; ?></td>
+                            <td><?php echo $customer['phone']; ?></td>
+                            <td>
+                                <a href="edit_customer.php?id=<?php echo $customer['id']; ?>">Edit</a>
+                                <a href="delete_customer.php?id=<?php echo $customer['id']; ?>">Delete</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="5">No customers found</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </main>
 
-    <input type="submit" class="btn" name="signUp" value="Sign Up">
-</form>
+    <!-- Footer Section -->
+    <footer>
+        <p>&copy; 2025 CRM System. All rights reserved.</p>
+    </footer>
 
-      <p class="or">
-        ----------or--------
-      </p>
-      <div class="icons">
-        <i class="fab fa-google"></i>
-        <i class="fab fa-facebook"></i>
-      </div>
-      <div class="links">
-        <p>Already Have Account ?</p>
-        <button id="signInButton">Sign In</button>
-      </div>
-    </div>
-
-    <div class="container" id="signIn">
-        <h1 class="form-title">Sign In</h1>
-        <form method="post" action="register.php">
-          <div class="input-group">
-              <i class="fas fa-envelope"></i>
-              <input type="email" name="email" id="email" placeholder="Email" required>
-              <label for="email">Email</label>
-          </div>
-          <div class="input-group">
-              <i class="fas fa-lock"></i>
-              <input type="password" name="password" id="password" placeholder="Password" required>
-              <label for="password">Password</label>
-          </div>
-          <p class="recover">
-            <a href="#">Recover Password</a>
-          </p>
-         <input type="submit" class="btn" value="Sign In" name="signIn">
-        </form>
-        <p class="or">
-          ----------or--------
-        </p>
-        <div class="icons">
-          <i class="fab fa-google"></i>
-          <i class="fab fa-facebook"></i>
-        </div>
-        <div class="links">
-          <p>Don't have account yet?</p>
-          <button id="signUpButton">Sign Up</button>
-        </div>
-      </div>
-      <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
