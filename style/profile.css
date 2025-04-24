@@ -1,0 +1,190 @@
+/* General styling */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #f4f4f4;
+    background: url('https://i.pinimg.com/474x/b2/24/ba/b224bae0222627f98fb20ae546fe9c85.jpg') no-repeat center center fixed; /* Background GIF */
+    background-size: cover; /* Cover entire background */
+}
+
+/* Navbar styling */
+.navbar {
+    background-color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.navbar .logo h1 {
+    color: white;
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.navbar .nav-links {
+    display: flex;
+    gap: 15px;
+}
+
+.navbar a {
+    color: white;
+    padding: 14px 20px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.navbar a:hover {
+    background-color: #ddd;
+    color: black;
+}
+
+/* Profile container */
+.container {
+    max-width: 800px;
+    margin: 100px auto; /* Adds space below navbar */
+    padding: 20px;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.8); /* Transparent background */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #fff;
+}
+
+/* Profile heading */
+.container h1 {
+    font-size: 36px;
+    color: #fcfcfc;
+    margin-bottom: 20px;
+}
+
+/* Profile picture styling */
+.profile-pic {
+    width: 131px;
+    height: 147px;
+    background-color: #D9D9D9;
+    border-radius: 9999px; /* Oval shape */
+    object-fit: cover;
+    margin-bottom: 15px;
+    border: 3px solid #f4f4f4;
+}
+
+/* Upload form */
+form {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+form label {
+    font-size: 16px;
+    color: #ddd;
+    display: block;
+    margin-bottom: 5px;
+}
+
+form input, form textarea, form button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: none;
+    border-radius: 5px;
+}
+
+form input[type="file"] {
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+form button {
+    background-color: #f44336;
+    color: #fff;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+form button:hover {
+    background-color: #d32f2f;
+}
+
+/* Recipe Section */
+.container h2 {
+    font-size: 28px;
+    margin-bottom: 15px;
+    color: #f8b400;
+}
+
+.recipe-post {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    margin-bottom: 20px;
+    color: #f4f4f4;
+}
+
+.recipe-post img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.recipe-post h3 {
+    font-size: 22px;
+    color: #f44336;
+    margin-bottom: 10px;
+}
+
+.recipe-post p {
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.recipe-post a {
+    color: #f8b400;
+    text-decoration: none;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.recipe-post a:hover {
+    text-decoration: underline;
+}
+
+/* Back to Homepage & Logout Links */
+.container a {
+    color: #f8b400;
+    font-size: 18px;
+    margin-top: 10px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.container a:hover {
+    text-decoration: underline;
+}
+
+/* Scrollbar styling */
+.container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.container::-webkit-scrollbar-track {
+    background: #333;
+}
+
+.container::-webkit-scrollbar-thumb {
+    background-color: #f44336;
+    border-radius: 10px;
+}
