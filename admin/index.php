@@ -16,8 +16,6 @@ include 'php/db_connect.php';
     <nav>
         <ul class="nav-links">
             <li><a href="#dashboard">Dashboard</a></li>
-            <li><a href="#customers">Customers</a></li>
-            <li><a href="#orders">Orders</a></li>
             <li><a href="#promotions">Promotions</a></li>
             <li><a href="login.php">SignIn</a></li>
             <li><a href="register.php">SignUp</a></li>
@@ -32,15 +30,6 @@ include 'php/db_connect.php';
         <p>Manage customers, orders, and promotions seamlessly!</p>
     </section>
 
-    <section id="customers" class="section">
-        <h2>Customer List</h2>
-        <div id="customerTable"></div>
-    </section>
-
-    <section id="orders" class="section">
-        <h2>Order Tracking</h2>
-        <div id="orderTable"></div>
-    </section>
 
     <section id="promotions" class="section">
         <h2>Promotions</h2>
