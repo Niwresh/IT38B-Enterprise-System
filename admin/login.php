@@ -1,50 +1,51 @@
 <?php
 // Include database connection
 include 'php/db_connect.php';
-
-// Start session for error/success messages
 session_start();
 
-// Check if there's a session message to display (success or error)
+// Initialize message
 $message = isset($_SESSION['message']) ? $_SESSION['message'] : '';
-unset($_SESSION['message']);  // Clear the message after it has been displayed
+unset($_SESSION['message']);
 
-// Check if the form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Sanitize the user inputs
     $email = trim($_POST['email']);
     $password = $_POST['password'];
 
-    // Prepare the query to check if the user exists
+    // Prepare and execute query
     $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    // Check if user exists
+    // If user exists
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
 
-        // Verify the password
+        // Check password
         if (password_verify($password, $user['password'])) {
-            // Password is correct, set session and redirect to homepage
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['email'] = $user['email'];
+            // Check role
+            if ($user['role'] === 'admin') {
+                // Login successful
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['email'] = $user['email'];
+                $_SESSION['role'] = $user['role'];
 
-            // Redirect to homepage
-            header("Location: homepage.php");
-            exit();
+                header("Location: homepage.php");
+                exit();
+            } else {
+                // Not an admin
+                $_SESSION['message'] = "You are not allowed here.";
+            }
         } else {
-            // Incorrect password
-            $_SESSION['message'] = "Error: Incorrect password.";
+            // Wrong password
+            $_SESSION['message'] = "Incorrect password.";
         }
     } else {
-        // User not found
+        // No user found
         $_SESSION['message'] = "Account not registered. REGISTER FIRST";
     }
 
-    // Close the statement and connection
     $stmt->close();
     $conn->close();
 }
@@ -54,71 +55,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - CRM-ERP</title>
+    <title>Login - CRM-ERP Admin</title>
     <link rel="stylesheet" href="css/login.css">
     <style>
         /* Modal styles */
         .modal {
-            display: none; /* Hidden by default */
+            display: none;
             position: fixed;
-            z-index: 1; /* Sit on top */
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgb(0, 0, 0); /* Fallback color */
-            background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
-            padding-top: 60px;
+            z-index: 1;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.4);
         }
-
         .modal-content {
             background-color: #fefefe;
-            margin: 5% auto;
+            margin: 15% auto;
             padding: 20px;
-            border: 1px solid #888;
             width: 80%;
+            max-width: 400px;
+            border-radius: 8px;
         }
-
         .close {
-            color: #aaa;
             float: right;
             font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
             cursor: pointer;
         }
-
-        .message {
-            margin-bottom: 20px;
-        }
-
-        /* Additional button style */
         .modal button {
-            background-color:rgb(255, 120, 41);
+            background-color: rgb(255, 120, 41);
             color: white;
             padding: 10px 20px;
             border: none;
-            cursor: pointer;
-            text-align: center;
             margin-top: 10px;
-        }
-
-        .modal button:hover {
-            background-color: #45a049;
         }
     </style>
 </head>
 <body>
 
 <div class="form-container">
-    <h2>Sign In to CRM-ERP</h2>
-
+    <h2>Sign In (Admin Access Only)</h2>
     <form action="login.php" method="POST">
         <input type="email" name="email" placeholder="Email" required>
         <input type="password" name="password" placeholder="Password" required>
@@ -127,36 +101,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </form>
 </div>
 
-<!-- Modal for error messages -->
+<!-- Modal -->
 <div id="errorModal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
-        <p id="modalMessage"><?php echo htmlspecialchars($_SESSION['message']); ?></p>
-        <a href="register.php"><button>REGISTER FIRST</button></a>
+        <p id="modalMessage"><?php echo htmlspecialchars($message); ?></p>
+        <?php if ($message === "Account not registered. REGISTER FIRST"): ?>
+            <a href="register.php"><button>Register</button></a>
+        <?php endif; ?>
     </div>
 </div>
 
 <script>
-    // Get the modal
     var modal = document.getElementById("errorModal");
+    var message = "<?php echo $message; ?>";
 
-    // Get the message element
-    var message = "<?php echo isset($_SESSION['message']) ? $_SESSION['message'] : ''; ?>";
-
-    // Show the modal if there's a message
     if (message) {
         modal.style.display = "block";
     }
 
-    // Get the <span> element that closes the modal
-    var span = document.getElementsByClassName("close")[0];
-
-    // When the user clicks on <span> (x), close the modal
-    span.onclick = function() {
+    document.getElementsByClassName("close")[0].onclick = function() {
         modal.style.display = "none";
     }
 
-    // When the user clicks anywhere outside of the modal, close it
     window.onclick = function(event) {
         if (event.target == modal) {
             modal.style.display = "none";

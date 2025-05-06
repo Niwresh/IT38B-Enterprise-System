@@ -10,6 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST["email"]);
     $password = $_POST["password"];
     $confirmpassword = $_POST["confirmpassword"];
+    $role = isset($_POST["is_admin"]) ? "admin" : "user";
 
     // Check if passwords match
     if ($password !== $confirmpassword) {
@@ -26,15 +27,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         die("Error: Email or username already exists. <a href='register.php'>Try again</a>");
     }
 
-    // Hash the password for security
+    // Hash the password
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-    // Insert the user into the database
-    $stmt = $conn->prepare("INSERT INTO users (username, firstname, fullname, email, password) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssss", $username, $firstname, $fullname, $email, $hashedPassword);
+    // Insert the user into the database with role
+    $stmt = $conn->prepare("INSERT INTO users (username, firstname, fullname, email, password, role) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssss", $username, $firstname, $fullname, $email, $hashedPassword, $role);
 
     if ($stmt->execute()) {
-        // Registration successful, show modal and redirect
         echo "
         <script>
             alert('Registration successful! You will be redirected to the login page.');
@@ -44,7 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "Error: " . $stmt->error;
     }
 
-    // Close the statement and database connection
+    // Close connections
     $stmt->close();
     $check->close();
     $conn->close();
@@ -70,6 +70,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <input type="email" name="email" placeholder="Email Address" required>
         <input type="password" name="password" placeholder="Password" required>
         <input type="password" name="confirmpassword" placeholder="Confirm Password" required>
+        
+        <!-- Admin Checkbox -->
+        <label>
+            <input type="checkbox" name="is_admin"> Register as Admin
+        </label>
+        
         <button type="submit">Register</button>
         <p>Already have an account? <a href="login.php">Sign in</a></p>
     </form>
