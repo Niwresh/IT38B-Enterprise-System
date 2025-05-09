@@ -24,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Check password
         if (password_verify($password, $user['password'])) {
             // Check role
-            if ($user['role'] === 'admin') {
+            if ($user['role'] === 'staff') {
                 // Login successful
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
@@ -55,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login - CRM-ERP Admin</title>
+    <title>Staff - CRM-ERP</title>
     <link rel="stylesheet" href="css/login.css">
     <style>
         /* Modal styles */
@@ -92,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
 
 <div class="form-container">
-    <h2>Sign In (Admin Access Only)</h2>
+    <h2>Sign In (Staff Access Only)</h2>
     <form action="login.php" method="POST">
         <input type="email" name="email" placeholder="Email" required>
         <input type="password" name="password" placeholder="Password" required>

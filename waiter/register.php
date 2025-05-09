@@ -10,7 +10,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST["email"]);
     $password = $_POST["password"];
     $confirmpassword = $_POST["confirmpassword"];
-    $role = isset($_POST["is_admin"]) ? "admin" : "user";
+
+    // Set the role as 'staff' by default
+    $role = isset($_POST["is_staff"]) && $_POST["is_staff"] == 'on' ? "staff" : "staff";  // Default and only option is "staff"
 
     // Check if passwords match
     if ($password !== $confirmpassword) {
@@ -30,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Hash the password
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-    // Insert the user into the database with role
+    // Insert the user into the database with role as "staff"
     $stmt = $conn->prepare("INSERT INTO users (username, firstname, fullname, email, password, role) VALUES (?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssssss", $username, $firstname, $fullname, $email, $hashedPassword, $role);
 
@@ -56,13 +58,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - CRM-ERP</title>
+    <title>Register - Staff</title>
     <link rel="stylesheet" href="css/register.css">
 </head>
 <body>
 
 <div class="form-container">
-    <h2>Create Your CRM-ERP Account</h2>
+    <h2>Create Your Staff Access Account</h2>
     <form action="register.php" method="POST">
         <input type="text" name="username" placeholder="User Name" required>
         <input type="text" name="firstname" placeholder="First Name" required>
@@ -71,9 +73,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <input type="password" name="password" placeholder="Password" required>
         <input type="password" name="confirmpassword" placeholder="Confirm Password" required>
         
-        <!-- Admin Checkbox -->
+        <!-- Staff Checkbox (optional, this doesn't change role, it's always "staff") -->
         <label>
-            <input type="checkbox" name="is_admin"> Register as Admin
+            <input type="checkbox" name="is_staff"> Register as Staff (checked by default)
         </label>
         
         <button type="submit">Register</button>
