@@ -2,32 +2,43 @@
 session_start();
 require 'php/db_connect.php';
 
-// Redirect if not logged in or not an admin
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+// Redirect if not logged in or not a staff
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'staff') {
     header("Location: index.php");
     exit();
 }
 
-// Get total number of users
-$total_users_query = mysqli_query($conn, "SELECT COUNT(*) AS total FROM users");
-$total_users_data = mysqli_fetch_assoc($total_users_query);
-$total_users = $total_users_data['total'];
+// Total Orders
+$order_total_query = mysqli_query($conn, "SELECT COUNT(*) AS total_orders FROM orders");
+$order_total_data = mysqli_fetch_assoc($order_total_query);
+$total_orders = $order_total_data['total_orders'];
 
-// Get total number of distinct roles (accounts registered)
-$total_accounts_query = mysqli_query($conn, "SELECT COUNT(DISTINCT role) AS total_roles FROM users");
-$total_accounts_data = mysqli_fetch_assoc($total_accounts_query);
-$total_accounts = $total_accounts_data['total_roles'];
+// Orders by Status
+$order_status_query = mysqli_query($conn, "
+    SELECT order_status, COUNT(*) AS count 
+    FROM orders 
+    GROUP BY order_status
+");
 
-// Get user counts per role (admin, user, staff)
-$roles = ['admin', 'user', 'staff'];
-$role_counts = [];
+$order_statuses = [];
+while ($row = mysqli_fetch_assoc($order_status_query)) {
+    $order_statuses[$row['order_status']] = $row['count'];
+}
 
-foreach ($roles as $role) {
-    $stmt = $conn->prepare("SELECT COUNT(*) AS count FROM users WHERE role = ?");
-    $stmt->bind_param("s", $role);
-    $stmt->execute();
-    $result = $stmt->get_result()->fetch_assoc();
-    $role_counts[$role] = (int)$result['count'];
+// Orders Per Day (last 7 days)
+$order_per_day_query = mysqli_query($conn, "
+    SELECT DATE(ordered_at) AS order_date, COUNT(*) AS count 
+    FROM orders 
+    WHERE ordered_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+    GROUP BY DATE(ordered_at)
+    ORDER BY order_date ASC
+");
+
+$order_dates = [];
+$order_counts = [];
+while ($row = mysqli_fetch_assoc($order_per_day_query)) {
+    $order_dates[] = $row['order_date'];
+    $order_counts[] = $row['count'];
 }
 ?>
 
@@ -35,7 +46,7 @@ foreach ($roles as $role) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard - CRM-ERP</title>
+    <title>Waiter Dashboard - CRM-ERP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -64,35 +75,38 @@ foreach ($roles as $role) {
     <div class="sidebar p-3">
         <h5 class="text-center">NAVIGATION</h5>
         <a href="homepage.php" class="active">🏠 Home</a>
-        <a href="admin_reports.php">📊 Reports</a>
-        <a href="manage_customers.php">👥 Customers</a>
-        <a href="inventory.php">📦 Inventory</a>
-        <a href="feedback.php">🗨️ Feedback</a>
+        <a href="admin_reports.php">📦 Orders</a>
+        <a href="manage_customers.php">🍽️ Menu</a>
+        <a href="inventory.php">📋 Inventory</a>
+        <a href="feedback.php">💬 Feedback</a>
         <a href="logout.php" class="text-danger">🔒 Logout</a>
     </div>
 
     <!-- Main content -->
     <div class="flex-grow-1 p-4">
-        <h3>WELCOME TO MY ENTERPRISE SYSTEM DASHBOARD</h3>
+        <h3>WELCOME WAITER, HERE'S YOUR DASHBOARD</h3>
         <hr>
 
-        <h4 class="mt-4">SYSTEM OVERVIEW:</h4>
+        <h4 class="mt-4">ORDER STATISTICS:</h4>
         <div class="row my-4">
             <div class="col-md-6">
                 <div class="card text-center bg-light border">
                     <div class="card-body">
-                        <h5>TOTAL USERS:</h5>
-                        <p class="display-6"><?= $total_users ?></p>
+                        <h5>TOTAL ORDERS:</h5>
+                        <p class="display-6"><?= $total_orders ?></p>
                     </div>
                 </div>
             </div>
+
             <div class="col-md-6">
-                <div class="card text-center bg-light border">
-                    <div class="card-body">
-                        <h5>TOTAL ACCOUNTS REGISTERED:</h5>
-                        <p class="display-6"><?= $total_accounts ?></p>
+                <?php foreach ($order_statuses as $status => $count): ?>
+                    <div class="card text-center bg-light border mb-2">
+                        <div class="card-body">
+                            <h5><?= strtoupper($status) ?> ORDERS:</h5>
+                            <p class="h4"><?= $count ?></p>
+                        </div>
                     </div>
-                </div>
+                <?php endforeach; ?>
             </div>
         </div>
 
@@ -100,7 +114,7 @@ foreach ($roles as $role) {
             <div class="col-md-7">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Line Chart Infographics</h5>
+                        <h5 class="card-title">Orders Per Day (Last 7 Days)</h5>
                         <canvas id="lineChart"></canvas>
                     </div>
                 </div>
@@ -109,60 +123,50 @@ foreach ($roles as $role) {
             <div class="col-md-5">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">User Distribution</h5>
+                        <h5 class="card-title">Order Status Distribution</h5>
                         <canvas id="pieChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row my-4">
-            <div class="col">
-                <div class="card bg-light">
-                    <div class="card-body">
-                        <h5 class="card-title">UP - COMING NEWS:</h5>
-                        <p>New features coming soon...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <footer class="text-center mt-5 mb-3">
-            <small>&copy; <?= date("Y") ?> CRM-ERP Restaurant System - Admin Panel</small>
+            <small>&copy; <?= date("Y") ?> CRM-ERP Restaurant System - Staff Panel</small>
         </footer>
     </div>
 </div>
 
 <!-- Chart.js Scripts -->
 <script>
-    // Placeholder Line Chart
+    // Line Chart (Orders per Day)
     const lineCtx = document.getElementById('lineChart').getContext('2d');
     new Chart(lineCtx, {
         type: 'line',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            labels: <?= json_encode($order_dates) ?>,
             datasets: [{
-                label: 'New Users',
-                data: [3, 5, 2, 8, 4, 6],
+                label: 'Orders',
+                data: <?= json_encode($order_counts) ?>,
                 borderColor: '#34a853',
                 fill: false
             }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            }
         }
     });
 
-    // Real-time Pie Chart
+    // Pie Chart (Orders by Status)
     const pieCtx = document.getElementById('pieChart').getContext('2d');
     new Chart(pieCtx, {
         type: 'pie',
         data: {
-            labels: ['Admin', 'User', 'Staff'],
+            labels: <?= json_encode(array_keys($order_statuses)) ?>,
             datasets: [{
-                data: [
-                    <?= $role_counts['admin'] ?>,
-                    <?= $role_counts['user'] ?>,
-                    <?= $role_counts['staff'] ?>
-                ],
-                backgroundColor: ['#f4c20d', '#34a853', '#4285f4']
+                data: <?= json_encode(array_values($order_statuses)) ?>,
+                backgroundColor: ['#f4c20d', '#34a853', '#4285f4', '#db4437', '#ab47bc']
             }]
         }
     });

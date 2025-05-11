@@ -6,7 +6,7 @@ include 'php/db_connect.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM-ERP: Restaurant Management</title>
+    <title>ADMIN CRM-ERP</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -26,7 +26,7 @@ include 'php/db_connect.php';
 
 
     <section id="dashboard" class="section">
-        <h1>Welcome to CRM-ERP</h1>
+        <h1>Welcome to ADMIN CRM-ERP</h1>
         <p>Manage customers, orders, and promotions seamlessly!</p>
     </section>
 

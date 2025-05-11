@@ -10,9 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST["email"]);
     $password = $_POST["password"];
     $confirmpassword = $_POST["confirmpassword"];
-
-    // Set the role as 'staff' by default
-    $role = isset($_POST["is_staff"]) && $_POST["is_staff"] == 'on' ? "staff" : "staff";  // Default and only option is "staff"
+    $role = isset($_POST["is_staff"]) ? 'staff' : 'user'; // Set role based on checkbox
 
     // Check if passwords match
     if ($password !== $confirmpassword) {
@@ -29,14 +27,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         die("Error: Email or username already exists. <a href='register.php'>Try again</a>");
     }
 
-    // Hash the password
+    // Hash the password for security
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-    // Insert the user into the database with role as "staff"
+    // Insert the user into the database with the selected role
     $stmt = $conn->prepare("INSERT INTO users (username, firstname, fullname, email, password, role) VALUES (?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssssss", $username, $firstname, $fullname, $email, $hashedPassword, $role);
 
     if ($stmt->execute()) {
+        // Registration successful, show alert and redirect
         echo "
         <script>
             alert('Registration successful! You will be redirected to the login page.');
@@ -46,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "Error: " . $stmt->error;
     }
 
-    // Close connections
+    // Close the statement and database connection
     $stmt->close();
     $check->close();
     $conn->close();
@@ -58,13 +57,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Staff</title>
+    <title>Register - CRM-ERP</title>
     <link rel="stylesheet" href="css/register.css">
 </head>
 <body>
 
 <div class="form-container">
-    <h2>Create Your Staff Access Account</h2>
+    <h2>Create Your CRM-ERP Account</h2>
     <form action="register.php" method="POST">
         <input type="text" name="username" placeholder="User Name" required>
         <input type="text" name="firstname" placeholder="First Name" required>
@@ -72,12 +71,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <input type="email" name="email" placeholder="Email Address" required>
         <input type="password" name="password" placeholder="Password" required>
         <input type="password" name="confirmpassword" placeholder="Confirm Password" required>
-        
-        <!-- Staff Checkbox (optional, this doesn't change role, it's always "staff") -->
         <label>
-            <input type="checkbox" name="is_staff"> Register as Staff (checked by default)
-        </label>
-        
+            <input type="checkbox" name="is_staff"> Register as Staff (Waiter)
+        </label><br><br>
         <button type="submit">Register</button>
         <p>Already have an account? <a href="login.php">Sign in</a></p>
     </form>
