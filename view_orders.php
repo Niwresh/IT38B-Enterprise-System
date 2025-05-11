@@ -4,38 +4,28 @@ require 'php/db_connect.php';
 
 $user_id = $_SESSION['user_id'];
 
-// Handle deleting an item from the cart
+// Delete item from cart
 if (isset($_POST['delete_item_id'])) {
     $delete_item_id = $_POST['delete_item_id'];
-
     $delete_query = "DELETE FROM cart WHERE user_id = $user_id AND menu_item_id = $delete_item_id LIMIT 1";
-
-    if (mysqli_query($conn, $delete_query)) {
-        $_SESSION['delete_success'] = "Item deleted successfully!";
-    } else {
-        $_SESSION['delete_error'] = "Error deleting item.";
-    }
+    mysqli_query($conn, $delete_query);
+    $_SESSION['delete_success'] = "Item deleted successfully!";
 }
 
-// Handle quantity update
+// Update quantity
 if (isset($_POST['update_quantity']) && isset($_POST['update_item_id'])) {
-    $update_quantity = $_POST['update_quantity'];
-    $update_item_id = $_POST['update_item_id'];
-
-    if ($update_quantity > 0) {
-        $update_query = "UPDATE cart SET quantity = $update_quantity WHERE user_id = $user_id AND menu_item_id = $update_item_id";
-
-        if (mysqli_query($conn, $update_query)) {
-            $_SESSION['update_success'] = "Quantity updated successfully!";
-        } else {
-            $_SESSION['update_error'] = "Error updating quantity.";
-        }
+    $qty = (int)$_POST['update_quantity'];
+    $item_id = $_POST['update_item_id'];
+    if ($qty > 0) {
+        $update_query = "UPDATE cart SET quantity = $qty WHERE user_id = $user_id AND menu_item_id = $item_id";
+        mysqli_query($conn, $update_query);
+        $_SESSION['update_success'] = "Quantity updated.";
     } else {
         $_SESSION['update_error'] = "Invalid quantity.";
     }
 }
 
-// Fetch cart items with menu item info
+// Fetch items in cart
 $query = "
     SELECT 
         c.*, 
@@ -54,6 +44,19 @@ $query = "
     GROUP BY c.menu_item_id
 ";
 $result = mysqli_query($conn, $query);
+$orders = [];
+while ($row = mysqli_fetch_assoc($result)) {
+    $orders[] = $row;
+}
+
+// Fetch order history with receipts
+$order_history_query = "
+    SELECT id, total_price, order_status, ordered_at, receipt 
+    FROM orders 
+    WHERE user_id = $user_id 
+    ORDER BY ordered_at DESC
+";
+$order_history_result = mysqli_query($conn, $order_history_query);
 ?>
 
 <!DOCTYPE html>
@@ -64,13 +67,14 @@ $result = mysqli_query($conn, $query);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
     <a class="navbar-brand" href="#">🍽️ CRM-ERP Restaurant</a>
-    <div class="collapse navbar-collapse" id="navbarContent">
+    <div class="collapse navbar-collapse">
         <ul class="navbar-nav ms-auto">
             <li class="nav-item"><a class="nav-link" href="homepage.php">Home</a></li>
             <li class="nav-item"><a class="nav-link active" href="view_menu.php">View Menu</a></li>
-            <li class="nav-item"><a class="nav-link" href="view_orders.php">View Orders</a></li>
+            <li class="nav-item"><a class="nav-link active" href="view_orders.php">View Orders</a></li>
             <li class="nav-item"><a class="nav-link" href="feedback.php">Add Feedback</a></li>
             <li class="nav-item"><a class="nav-link text-danger" href="logout.php">Logout 🔒</a></li>
         </ul>
@@ -78,7 +82,7 @@ $result = mysqli_query($conn, $query);
 </nav>
 
 <div class="container py-5">
-    <h2 class="mb-4">Your Cart</h2>
+    <h2 class="mb-4">🛒 Your Cart</h2>
 
     <?php foreach (['delete_success', 'delete_error', 'update_success', 'update_error'] as $msg): ?>
         <?php if (isset($_SESSION[$msg])): ?>
@@ -87,6 +91,14 @@ $result = mysqli_query($conn, $query);
             </div>
         <?php endif; ?>
     <?php endforeach; ?>
+
+    <?php if (count($orders) > 0): ?>
+        <div class="mb-3 text-end">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#checkoutModal">
+                Checkout 🧾
+            </button>
+        </div>
+    <?php endif; ?>
 
     <table class="table table-bordered">
         <thead class="table-dark">
@@ -102,8 +114,7 @@ $result = mysqli_query($conn, $query);
         </thead>
         <tbody>
             <?php $grand_total = 0; ?>
-            <?php mysqli_data_seek($result, 0); ?>
-            <?php while ($row = mysqli_fetch_assoc($result)): ?>
+            <?php foreach ($orders as $row): ?>
                 <tr>
                     <td><?= $row['name'] ?></td>
                     <td><?= number_format($row['price'], 2) ?></td>
@@ -141,7 +152,7 @@ $result = mysqli_query($conn, $query);
                         </form>
                     </td>
                 </tr>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
             <tr class="fw-bold">
                 <td colspan="3" class="text-end">Grand Total:</td>
                 <td colspan="4">₱<?= number_format($grand_total, 2) ?></td>
@@ -149,64 +160,120 @@ $result = mysqli_query($conn, $query);
         </tbody>
     </table>
 
-    <?php if (mysqli_num_rows($result) > 0): ?>
-        <button type="button" class="btn btn-success mt-3" data-bs-toggle="modal" data-bs-target="#checkoutModal">
-            Checkout 🧾
-        </button>
+    <!-- 🧾 Order Summary Modal -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form method="post" action="finalize_order.php">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="checkoutModalLabel">Order Summary</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table">
+                            <thead>
+                                <tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $grand_total = 0;
+                                foreach ($orders as $row):
+                                    $subtotal = $row['price'] * $row['quantity'];
+                                    $grand_total += $subtotal;
+                                ?>
+                                <tr>
+                                    <td><?= $row['name'] ?></td>
+                                    <td><?= $row['quantity'] ?></td>
+                                    <td>₱<?= number_format($row['price'], 2) ?></td>
+                                    <td>₱<?= number_format($subtotal, 2) ?></td>
+                                </tr>
+                                <input type="hidden" name="items[]" value="<?= $row['menu_item_id'] ?>">
+                                <?php endforeach; ?>
+                                <tr class="fw-bold">
+                                    <td colspan="3" class="text-end">Total</td>
+                                    <td>₱<?= number_format($grand_total, 2) ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Finalize Order ✅</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📜 Order History Section -->
+    <h3 class="mt-5">📜 Order History</h3>
+    <?php if (mysqli_num_rows($order_history_result) > 0): ?>
+        <table class="table table-bordered mt-3">
+            <thead class="table-secondary">
+                <tr>
+                    <th>Order #</th>
+                    <th>Total Price</th>
+                    <th>Status</th>
+                    <th>Ordered At</th>
+                    <th>Receipt</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php while ($order = mysqli_fetch_assoc($order_history_result)): ?>
+                    <tr>
+                        <td><?= $order['id'] ?></td>
+                        <td>₱<?= number_format($order['total_price'], 2) ?></td>
+                        <td><span class="badge bg-info"><?= ucfirst($order['order_status']) ?></span></td>
+                        <td><?= $order['ordered_at'] ?></td>
+                        <td>
+                            <?php if ($order['order_status'] === 'done' && $order['receipt']): ?>
+                                <a href="javascript:void(0);" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#receiptModal" data-receipt="<?= $order['receipt'] ?>">View Receipt</a>
+                            <?php else: ?>
+                                <em>No receipt yet</em>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+            </tbody>
+        </table>
+    <?php else: ?>
+        <p class="text-muted">You haven't placed any orders yet.</p>
     <?php endif; ?>
 </div>
 
-<!-- Checkout Summary Modal -->
-<div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <form method="post" action="finalize_order.php">
-        <div class="modal-header">
-          <h5 class="modal-title" id="checkoutModalLabel">Order Summary</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- 📜 Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="receiptModalLabel">Receipt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="receiptContent">
+                <!-- Receipt content will be loaded dynamically here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
-        <div class="modal-body">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php
-              mysqli_data_seek($result, 0); // Reset result pointer
-              $grand_total = 0;
-              while ($row = mysqli_fetch_assoc($result)):
-                  $subtotal = $row['price'] * $row['quantity'];
-                  $grand_total += $subtotal;
-              ?>
-              <tr>
-                <td><?= $row['name'] ?></td>
-                <td><?= $row['quantity'] ?></td>
-                <td>₱<?= number_format($row['price'], 2) ?></td>
-                <td>₱<?= number_format($subtotal, 2) ?></td>
-              </tr>
-              <input type="hidden" name="items[]" value="<?= $row['menu_item_id'] ?>">
-              <?php endwhile; ?>
-              <tr class="fw-bold">
-                <td colspan="3" class="text-end">Total</td>
-                <td>₱<?= number_format($grand_total, 2) ?></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Finalize Order ✅</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        </div>
-      </form>
     </div>
-  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.querySelectorAll('.btn-primary[data-bs-toggle="modal"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const receiptId = this.getAttribute('data-receipt');
+            fetch('receipt.php?receipt=' + receiptId)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('receiptContent').innerHTML = data;
+                })
+                .catch(error => console.error('Error loading receipt:', error));
+        });
+    });
+</script>
+
 </body>
 </html>
