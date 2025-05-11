@@ -77,7 +77,6 @@ while ($row = mysqli_fetch_assoc($order_per_day_query)) {
         <a href="homepage.php" class="active">🏠 Home</a>
         <a href="order.php">📦 Orders</a>
         <a href="menu.php">🍽️ Menu</a>
-        <a href="inventory.php">📋 Inventory</a>
         <a href="feedback.php">💬 Feedback</a>
         <a href="logout.php" class="text-danger">🔒 Logout</a>
     </div>
