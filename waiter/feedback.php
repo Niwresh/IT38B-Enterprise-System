@@ -70,7 +70,6 @@ $result = mysqli_query($conn, $query);
         <a href="homepage.php">🏠 Home</a>
         <a href="admin_reports.php">📊 Reports</a>
         <a href="manage_customers.php">👥 Customers</a>
-        <a href="inventory.php">📦 Inventory</a>
         <a href="feedback.php" class="active">🗨️ Feedback</a>
         <a href="logout.php" class="text-danger">🔒 Logout</a>
     </div>
