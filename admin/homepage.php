@@ -100,8 +100,17 @@ foreach ($roles as $role) {
             <div class="col-md-7">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Line Chart Infographics</h5>
+                        <h5 class="card-title">Sales Overview</h5>
                         <canvas id="lineChart"></canvas>
+
+                        <div class="mt-3">
+                            <label for="salesView" class="form-label">Select View:</label>
+                            <select id="salesView" class="form-select w-auto">
+                                <option value="both" selected>SALES</option>
+                                <option value="weekly">Weekly Sales</option>
+                                <option value="monthly">Monthly Sales</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -133,24 +142,68 @@ foreach ($roles as $role) {
     </div>
 </div>
 
-<!-- Chart.js Scripts -->
+<!-- Chart.js Script -->
 <script>
-    // Placeholder Line Chart
     const lineCtx = document.getElementById('lineChart').getContext('2d');
-    new Chart(lineCtx, {
+
+    const weeklyLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const monthlyLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+
+    const lineChart = new Chart(lineCtx, {
         type: 'line',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-                label: 'New Users',
-                data: [3, 5, 2, 8, 4, 6],
-                borderColor: '#34a853',
-                fill: false
-            }]
+            labels: weeklyLabels,
+            datasets: [
+                {
+                    label: 'Weekly Sales',
+                    data: [120, 190, 300, 250, 180, 230, 270],
+                    borderColor: '#34a853',
+                    backgroundColor: 'rgba(52, 168, 83, 0.2)',
+                    tension: 0.3,
+                    hidden: false
+                },
+                {
+                    label: 'Monthly Sales',
+                    data: [1500, 2300, 1800, 2900, 3100, 2700],
+                    borderColor: '#4285f4',
+                    backgroundColor: 'rgba(66, 133, 244, 0.2)',
+                    tension: 0.3,
+                    hidden: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
         }
     });
 
-    // Real-time Pie Chart
+    document.getElementById('salesView').addEventListener('change', function () {
+        const selected = this.value;
+
+        if (selected === 'weekly') {
+            lineChart.data.labels = weeklyLabels;
+            lineChart.data.datasets[0].hidden = false;
+            lineChart.data.datasets[1].hidden = true;
+        } else if (selected === 'monthly') {
+            lineChart.data.labels = monthlyLabels;
+            lineChart.data.datasets[0].hidden = true;
+            lineChart.data.datasets[1].hidden = false;
+        } else {
+            // both
+            lineChart.data.labels = weeklyLabels;
+            lineChart.data.datasets[0].hidden = false;
+            lineChart.data.datasets[1].hidden = false;
+        }
+
+        lineChart.update();
+    });
+
+    // Pie Chart
     const pieCtx = document.getElementById('pieChart').getContext('2d');
     new Chart(pieCtx, {
         type: 'pie',
