@@ -67,10 +67,10 @@ $result = mysqli_query($conn, $query);
     <!-- Sidebar -->
     <div class="sidebar p-3">
         <h5 class="text-center">NAVIGATION</h5>
-        <a href="homepage.php">🏠 Home</a>
-        <a href="admin_reports.php">📊 Reports</a>
-        <a href="manage_customers.php">👥 Customers</a>
-        <a href="feedback.php" class="active">🗨️ Feedback</a>
+        <a href="homepage.php" class="active">🏠 Home</a>
+        <a href="order.php">📦 Orders</a>
+        <a href="menu.php">🍽️ Menu</a>
+        <a href="feedback.php">💬 Feedback</a>
         <a href="logout.php" class="text-danger">🔒 Logout</a>
     </div>
 
