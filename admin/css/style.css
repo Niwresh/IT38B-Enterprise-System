@@ -9,9 +9,10 @@ body {
     background: #f9f9f9;
 }
 
+/* NAVBAR */
 .navbar {
-    background: #ff5722;
-    color: #fff;
+    background: #d8a7d8; /* matches admin sidebar */
+    color: #000;
     display: flex;
     justify-content: space-between;
     padding: 1rem 2rem;
@@ -21,6 +22,11 @@ body {
     z-index: 1000;
 }
 
+.logo {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
 .nav-links {
     list-style: none;
     display: flex;
@@ -28,31 +34,31 @@ body {
 }
 
 .nav-links a {
-    color: white;
+    color: black;
     text-decoration: none;
     font-weight: bold;
     transition: 0.3s;
 }
 
 .nav-links a:hover {
+    color: red;
     text-decoration: underline;
 }
 
+/* SECTIONS */
 .section {
     padding: 4rem 2rem;
     min-height: 100vh;
+    background-color: #fff;
+    margin: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-#customerTable, #orderTable {
-    margin-top: 20px;
-    background: #fff;
-    padding: 1rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
+/* RESPONSIVE */
 @media (max-width: 768px) {
     .nav-links {
         flex-direction: column;
+        gap: 10px;
     }
 }
