@@ -61,7 +61,7 @@ if (isset($_SESSION['user_id'])) {
             <?php while ($row = mysqli_fetch_assoc($result)): ?>
                 <div class="col-md-4 mb-4">
                     <div class="card h-100">
-                        <img src="<?php echo $row['image']; ?>" class="card-img-top" alt="Menu Image">
+                        <img src="<?php echo $row['image_url']; ?>" class="card-img-top" alt="Menu Image">
                         <div class="card-body">
                             <h5 class="card-title"><?php echo $row['name']; ?></h5>
                             <p class="card-text"><?php echo $row['description']; ?></p>
