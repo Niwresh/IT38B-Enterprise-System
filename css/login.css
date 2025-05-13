@@ -86,7 +86,7 @@ body {
 
 .form-container button {
     padding: 0.75rem 1rem;
-    background-color: #ff5722;
+    background-color: #00B1FD;
     color: white;
     border: none;
     border-radius: 5px;
@@ -96,7 +96,7 @@ body {
 }
 
 .form-container button:hover {
-    background-color: #e64a19;
+    background-color: #d8a7d8;
 }
 
 .form-container p {
@@ -105,7 +105,7 @@ body {
 }
 
 .form-container a {
-    color: #ff5722;
+    color: #00B1FD;
     text-decoration: none;
 }
 
