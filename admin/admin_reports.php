@@ -27,6 +27,29 @@ $query = "
 ";
 
 $result = mysqli_query($conn, $query);
+
+// Calculate metrics
+$total_orders = 0;
+$pending_orders = 0;
+$done_orders = 0;
+$cancelled_orders = 0;
+$total_revenue = 0.00;
+
+mysqli_data_seek($result, 0);
+while ($row = mysqli_fetch_assoc($result)) {
+    $total_orders++;
+
+    if ($row['order_status'] === 'pending') {
+        $pending_orders++;
+    } elseif ($row['order_status'] === 'done') {
+        $done_orders++;
+        $total_revenue += $row['total_price'];
+    } elseif ($row['order_status'] === 'cancelled') {
+        $cancelled_orders++;
+    }
+}
+
+mysqli_data_seek($result, 0); // Reset again for table display
 ?>
 
 <!DOCTYPE html>
@@ -73,6 +96,20 @@ $result = mysqli_query($conn, $query);
         <h3>System Reports</h3>
         <hr>
 
+        <!-- Summary Cards -->
+        <div class="row text-center mb-4">
+            <div class="col-md-2"><div class="bg-primary text-white p-3 rounded">Total Orders<br><strong><?= $total_orders ?></strong></div></div>
+            <div class="col-md-2"><div class="bg-warning text-dark p-3 rounded">Pending<br><strong><?= $pending_orders ?></strong></div></div>
+            <div class="col-md-2"><div class="bg-success text-white p-3 rounded">Completed<br><strong><?= $done_orders ?></strong></div></div>
+            <div class="col-md-2"><div class="bg-danger text-white p-3 rounded">Cancelled<br><strong><?= $cancelled_orders ?></strong></div></div>
+            <div class="col-md-4"><div class="bg-dark text-white p-3 rounded">Total Revenue<br><strong>₱<?= number_format($total_revenue, 2) ?></strong></div></div>
+        </div>
+
+        <!-- Export Button -->
+        <form method="POST" action="export_orders.php">
+            <button type="submit" class="btn btn-outline-secondary mb-3">⬇️ Export to CSV</button>
+        </form>
+
         <h5>Orders Overview</h5>
         <table class="table table-bordered table-hover mt-3">
             <thead class="table-dark">
@@ -100,8 +137,10 @@ $result = mysqli_query($conn, $query);
                         <td>
                             <?php if ($row['order_status'] === 'pending') : ?>
                                 <span class="badge bg-warning text-dark">Pending</span>
-                            <?php else : ?>
+                            <?php elseif ($row['order_status'] === 'done') : ?>
                                 <span class="badge bg-success">Done</span>
+                            <?php elseif ($row['order_status'] === 'cancelled') : ?>
+                                <span class="badge bg-danger">Cancelled</span>
                             <?php endif; ?>
                         </td>
                     </tr>
