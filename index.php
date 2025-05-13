@@ -17,7 +17,7 @@ include 'php/db_connect.php';
     <nav>
         <ul class="nav-links">
             <li><a href="#dashboard">Dashboard</a></li>
-            <li><a href="#About">About</a></li>
+            <li><a href="About.php">About</a></li>
             <li><a href="login.php">SignIn</a></li>
             <li><a href="register.php">SignUp</a></li>
         </ul>
