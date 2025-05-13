@@ -21,45 +21,36 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <title>Customer Dashboard - CRM-ERP Restaurant System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/homepage.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
-<body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-        <a class="navbar-brand" href="#">🍽️ CRM-ERP Restaurant</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+<body>
 
-        <div class="collapse navbar-collapse" id="navbarContent">
-            <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-                    <a class="nav-link" href="homepage.php">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="view_menu.php">View Menu</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="view_orders.php">View Orders</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="feedback.php">Add Feedback</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-danger" href="logout.php">Logout 🔒</a>
-                </li>
-            </ul>
+    <!-- Custom Navbar -->
+    <header class="navbar">
+        <div class="logo">🍽️ CRM-ERP Restaurant</div>
+        <ul class="nav-links">
+            <li><a href="homepage.php">Home</a></li>
+            <li><a href="view_menu.php">View Menu</a></li>
+            <li><a href="view_orders.php">View Orders</a></li>
+            <li><a href="feedback.php">Add Feedback</a></li>
+            <li><a class="text-danger" href="logout.php">Logout 🔒</a></li>
+        </ul>
+    </header>
+
+    <!-- Main Content -->
+    <section class="section">
+        <div class="card" style="max-width: 700px; margin: auto; text-align: center;">
+            <h1>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h1>
+            <p style="color: #666;">You have <strong><?php echo $cart_count; ?></strong> item(s) in your cart.</p>
+            <p>Use the navigation links above to manage your orders, browse the menu, or send us your feedback. We're glad to have you!</p>
+            <a href="view_menu.php" class="btn">Order Now</a>
         </div>
-    </nav>
-
-    <div class="container py-5">
-        <h2 class="text-center">Welcome, <?php echo $_SESSION['username']; ?>!</h2>
-        <p class="text-center text-muted">Use the navigation bar above to manage your orders and feedback.</p>
-    </div>
+    </section>
 
     <footer class="text-center mt-5 mb-3">
         <small>&copy; <?php echo date("Y"); ?> CRM-ERP Restaurant System. All rights reserved.</small>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

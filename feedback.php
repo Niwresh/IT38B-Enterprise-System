@@ -29,6 +29,108 @@ if ($result) {
 }
 ?>
 
+<style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: #d8a7d8;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar .navbar-nav .nav-link {
+            color: white !important; /* Enforcing the white color */
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .navbar .navbar-nav .nav-link:hover {
+            text-decoration: underline !important; /* Enforcing the underline on hover */
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Section styling */
+        .section {
+            padding: 4rem 2rem;
+            min-height: 100vh;
+        }
+
+        /* Card */
+        .card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            animation: fadeInUp 1s ease forwards;
+            opacity: 0;
+        }
+
+        /* Button */
+        .btn {
+            background: #00B1FD;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1.5rem;
+            transition: background 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #e64a19;
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive nav */
+        @media (max-width: 768px) {
+            .nav-links {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .navbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,6 +146,12 @@ if ($result) {
         .star.checked {
             color: gold;
         }
+        .btn{
+            background: #00B1FD;
+        }
+        .btn:hover {
+            background: #e64a19;
+        }
     </style>
     <script>
         function setStars(value) {
@@ -56,7 +164,7 @@ if ($result) {
     </script>
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+    <nav class="navbar navbar-expand-lg  px-3">
         <a class="navbar-brand" href="#">🍽️ CRM-ERP Restaurant</a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav ms-auto">
@@ -83,7 +191,7 @@ if ($result) {
                 <label class="form-label">Your Feedback:</label>
                 <textarea name="comment" rows="4" class="form-control" placeholder="Tell us what you think..." required></textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Submit Feedback</button>
+            <button type="submit" class="btn">Submit Feedback</button>
         </form>
 
         <hr class="my-5">
