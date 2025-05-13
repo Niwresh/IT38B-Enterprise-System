@@ -103,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         /* Additional button style */
         .modal button {
-            background-color:rgb(255, 120, 41);
+            background-color: #00B1FD;
             color: white;
             padding: 10px 20px;
             border: none;
