@@ -8,7 +8,19 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Fetch orders and join with users and menu items
+// Handle filters
+$filter_type = $_GET['filter_type'] ?? '';
+$day = $_GET['day'] ?? '';
+$month = $_GET['month'] ?? '';
+$filter_condition = "";
+
+if ($filter_type === 'weekly' && $day !== '') {
+    $filter_condition = "WHERE DAYNAME(o.ordered_at) = '" . mysqli_real_escape_string($conn, $day) . "'";
+} elseif ($filter_type === 'monthly' && $month !== '') {
+    $filter_condition = "WHERE MONTHNAME(o.ordered_at) = '" . mysqli_real_escape_string($conn, $month) . "'";
+}
+
+// Fetch orders with optional filter
 $query = "
     SELECT 
         o.id,
@@ -23,6 +35,7 @@ $query = "
     FROM orders o
     LEFT JOIN users u ON o.user_id = u.id
     LEFT JOIN menu_items m ON o.menu_item_id = m.id
+    $filter_condition
     ORDER BY o.ordered_at DESC
 ";
 
@@ -38,7 +51,6 @@ $total_revenue = 0.00;
 mysqli_data_seek($result, 0);
 while ($row = mysqli_fetch_assoc($result)) {
     $total_orders++;
-
     if ($row['order_status'] === 'pending') {
         $pending_orders++;
     } elseif ($row['order_status'] === 'done') {
@@ -110,7 +122,51 @@ mysqli_data_seek($result, 0); // Reset again for table display
             <button type="submit" class="btn btn-outline-secondary mb-3">⬇️ Export to CSV</button>
         </form>
 
-        <h5>Orders Overview</h5>
+        <!-- Orders Header and Filter -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5>Orders Overview</h5>
+
+            <form method="GET" class="d-flex align-items-center gap-2">
+                <select name="filter_type" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Filter by</option>
+                    <option value="weekly" <?= ($filter_type === 'weekly') ? 'selected' : '' ?>>Weekly</option>
+                    <option value="monthly" <?= ($filter_type === 'monthly') ? 'selected' : '' ?>>Monthly</option>
+                </select>
+
+                <?php if ($filter_type === 'weekly') : ?>
+                    <select name="day" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Select Day</option>
+                        <?php
+                        $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+                        foreach ($days as $d) {
+                            $selected = ($day === $d) ? 'selected' : '';
+                            echo "<option value='$d' $selected>$d</option>";
+                        }
+                        ?>
+                    </select>
+                <?php elseif ($filter_type === 'monthly') : ?>
+                    <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Select Month</option>
+                        <?php
+                        $months = [
+                            'January','February','March','April','May','June',
+                            'July','August','September','October','November','December'
+                        ];
+                        foreach ($months as $m) {
+                            $selected = ($month === $m) ? 'selected' : '';
+                            echo "<option value='$m' $selected>$m</option>";
+                        }
+                        ?>
+                    </select>
+                <?php endif; ?>
+
+                <?php if ($filter_type || $day || $month) : ?>
+                    <a href="admin_reports.php" class="btn btn-sm btn-outline-secondary">Reset</a>
+                <?php endif; ?>
+            </form>
+        </div>
+
+        <!-- Orders Table -->
         <table class="table table-bordered table-hover mt-3">
             <thead class="table-dark">
                 <tr>
@@ -125,26 +181,30 @@ mysqli_data_seek($result, 0); // Reset again for table display
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = mysqli_fetch_assoc($result)) : ?>
-                    <tr>
-                        <td><?= $row['id'] ?></td>
-                        <td><?= htmlspecialchars($row['firstname']) ?> (<?= htmlspecialchars($row['fullname']) ?>)</td>
-                        <td><?= htmlspecialchars($row['menu_item']) ?></td>
-                        <td><?= $row['quantity'] ?></td>
-                        <td>₱<?= number_format($row['price'], 2) ?></td>
-                        <td>₱<?= number_format($row['total_price'], 2) ?></td>
-                        <td><?= $row['ordered_at'] ?></td>
-                        <td>
-                            <?php if ($row['order_status'] === 'pending') : ?>
-                                <span class="badge bg-warning text-dark">Pending</span>
-                            <?php elseif ($row['order_status'] === 'done') : ?>
-                                <span class="badge bg-success">Done</span>
-                            <?php elseif ($row['order_status'] === 'cancelled') : ?>
-                                <span class="badge bg-danger">Cancelled</span>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
+                <?php if (mysqli_num_rows($result) > 0): ?>
+                    <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+                        <tr>
+                            <td><?= $row['id'] ?></td>
+                            <td><?= htmlspecialchars($row['firstname']) ?> (<?= htmlspecialchars($row['fullname']) ?>)</td>
+                            <td><?= htmlspecialchars($row['menu_item']) ?></td>
+                            <td><?= $row['quantity'] ?></td>
+                            <td>₱<?= number_format($row['price'], 2) ?></td>
+                            <td>₱<?= number_format($row['total_price'], 2) ?></td>
+                            <td><?= $row['ordered_at'] ?></td>
+                            <td>
+                                <?php if ($row['order_status'] === 'pending') : ?>
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                <?php elseif ($row['order_status'] === 'done') : ?>
+                                    <span class="badge bg-success">Done</span>
+                                <?php elseif ($row['order_status'] === 'cancelled') : ?>
+                                    <span class="badge bg-danger">Cancelled</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr><td colspan="8" class="text-center">No orders found for the selected filter.</td></tr>
+                <?php endif; ?>
             </tbody>
         </table>
 
