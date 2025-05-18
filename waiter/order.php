@@ -2,36 +2,38 @@
 session_start();
 require 'php/db_connect.php';
 
-// Redirect if not staff
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'staff') {
     header("Location: index.php");
     exit();
 }
 
-// Handle update order status
-if (isset($_POST['update_status']) && isset($_POST['order_id']) && isset($_POST['new_status'])) {
-    $order_id = intval($_POST['order_id']);
-    $new_status = mysqli_real_escape_string($conn, $_POST['new_status']);
+// Filtering logic
+$filter = $_GET['filter'] ?? '';
+$value = $_GET['value'] ?? '';
 
-    if ($new_status === 'done') {
-        $receipt = uniqid('RCPT-');
-        mysqli_query($conn, "UPDATE orders SET order_status = '$new_status', receipt = '$receipt' WHERE id = $order_id");
-    } else {
-        mysqli_query($conn, "UPDATE orders SET order_status = '$new_status' WHERE id = $order_id");
-    }
+$whereClause = '';
+$filterLabel = '';
 
-    header("Location: order.php");
-    exit();
+if ($filter === 'weekly' && $value) {
+    $day = mysqli_real_escape_string($conn, $value);
+    $whereClause = "WHERE DAYNAME(orders.ordered_at) = '$day'";
+    $filterLabel = "Showing orders for: $day";
+} elseif ($filter === 'monthly' && $value) {
+    $month = (int)$value;
+    $whereClause = "WHERE MONTH(orders.ordered_at) = $month";
+    $monthName = date("F", mktime(0, 0, 0, $month, 1));
+    $filterLabel = "Showing orders for: $monthName";
 }
 
-// Fetch all orders with user info
-$result = mysqli_query($conn, "
+$query = "
     SELECT orders.id AS order_id, users.firstname, users.fullname, users.Email, 
            orders.total_price, orders.order_status, orders.ordered_at, orders.receipt 
     FROM orders 
     LEFT JOIN users ON orders.user_id = users.id
+    $whereClause
     ORDER BY orders.ordered_at DESC
-");
+";
+$result = mysqli_query($conn, $query);
 ?>
 
 <!DOCTYPE html>
@@ -56,8 +58,8 @@ $result = mysqli_query($conn, "
             background-color: #fff;
             color: red;
         }
-        .btn-status {
-            margin-right: 5px;
+        .collapse .dropdown-item {
+            padding-left: 2rem;
         }
     </style>
 </head>
@@ -76,7 +78,47 @@ $result = mysqli_query($conn, "
 
     <!-- Main content -->
     <div class="flex-grow-1 p-4">
-        <h2 class="mb-4">📦 Orders Management</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>📦 Orders Management</h2>
+
+            <!-- Filter Dropdown -->
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="filterMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                    Filter Orders
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterMenu" style="min-width: 220px;">
+                    <!-- Weekly Section -->
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="toggleSubmenu('weeklySubmenu')">📅 Weekly ▸</a>
+                        <ul class="list-unstyled ms-3 collapse" id="weeklySubmenu">
+                            <?php
+                            $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+                            foreach ($days as $day):
+                            ?>
+                                <li><a class="dropdown-item" href="?filter=weekly&value=<?= $day ?>"><?= $day ?></a></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </li>
+
+                    <!-- Monthly Section -->
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="toggleSubmenu('monthlySubmenu')">🗓️ Monthly ▸</a>
+                        <ul class="list-unstyled ms-3 collapse" id="monthlySubmenu">
+                            <?php for ($i = 1; $i <= 12; $i++): ?>
+                                <li><a class="dropdown-item" href="?filter=monthly&value=<?= $i ?>"><?= date("F", mktime(0, 0, 0, $i, 1)) ?></a></li>
+                            <?php endfor; ?>
+                        </ul>
+                    </li>
+
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="order.php">Clear Filter</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <?php if ($filterLabel): ?>
+            <div class="alert alert-info"><?= $filterLabel ?></div>
+        <?php endif; ?>
 
         <table class="table table-bordered table-hover">
             <thead class="table-secondary">
@@ -91,31 +133,53 @@ $result = mysqli_query($conn, "
                 </tr>
             </thead>
             <tbody>
-            <?php while ($row = mysqli_fetch_assoc($result)): ?>
-                <tr>
-                    <td><?= $row['order_id'] ?></td>
-                    <td><?= htmlspecialchars($row['firstname'] . ' ' . $row['fullname']) ?></td>
-                    <td><?= htmlspecialchars($row['Email']) ?></td>
-                    <td>₱<?= number_format($row['total_price'], 2) ?></td>
-                    <td><span class="badge bg-info"><?= ucfirst($row['order_status']) ?></span></td>
-                    <td><?= $row['ordered_at'] ?></td>
-                    <td>
-                        <form method="POST" class="d-flex mb-1">
-                            <input type="hidden" name="order_id" value="<?= $row['order_id'] ?>">
-                            <select name="new_status" class="form-select form-select-sm me-2" required>
-                                <option disabled selected>Update...</option>
-                                <option value="done">Done</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                            <button type="submit" name="update_status" class="btn btn-sm btn-success">Update</button>
-                        </form>
-                    </td>
-                </tr>
-            <?php endwhile; ?>
+            <?php if (mysqli_num_rows($result) > 0): ?>
+                <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                    <tr>
+                        <td><?= $row['order_id'] ?></td>
+                        <td><?= htmlspecialchars($row['firstname'] . ' ' . $row['fullname']) ?></td>
+                        <td><?= htmlspecialchars($row['Email']) ?></td>
+                        <td>₱<?= number_format($row['total_price'], 2) ?></td>
+                        <td><span class="badge bg-info"><?= ucfirst($row['order_status']) ?></span></td>
+                        <td><?= $row['ordered_at'] ?></td>
+                        <td>
+                            <form method="POST" class="d-flex mb-1">
+                                <input type="hidden" name="order_id" value="<?= $row['order_id'] ?>">
+                                <select name="new_status" class="form-select form-select-sm me-2" required>
+                                    <option disabled selected>Update...</option>
+                                    <option value="done">Done</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                                <button type="submit" name="update_status" class="btn btn-sm btn-success">Update</button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <tr><td colspan="7" class="text-center">No orders found.</td></tr>
+            <?php endif; ?>
             </tbody>
         </table>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Toggle logic for submenus -->
+<script>
+    function toggleSubmenu(id) {
+        const submenu = document.getElementById(id);
+        const isVisible = submenu.classList.contains('show');
+        document.querySelectorAll('.dropdown-menu .collapse').forEach(el => el.classList.remove('show'));
+        if (!isVisible) submenu.classList.add('show');
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.dropdown')) {
+            document.querySelectorAll('.dropdown-menu .collapse').forEach(el => el.classList.remove('show'));
+        }
+    });
+</script>
 
 </body>
 </html>
