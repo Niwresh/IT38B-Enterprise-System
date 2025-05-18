@@ -19,7 +19,19 @@ if (isset($_GET['delete'])) {
     exit();
 }
 
-// Fetch feedback with user names
+// Handle filters
+$filter_type = $_GET['filter_type'] ?? '';
+$day = $_GET['day'] ?? '';
+$month = $_GET['month'] ?? '';
+$filter_condition = "";
+
+if ($filter_type === 'weekly' && $day !== '') {
+    $filter_condition = "WHERE DAYNAME(f.created_at) = '" . mysqli_real_escape_string($conn, $day) . "'";
+} elseif ($filter_type === 'monthly' && $month !== '') {
+    $filter_condition = "WHERE MONTHNAME(f.created_at) = '" . mysqli_real_escape_string($conn, $month) . "'";
+}
+
+// Fetch feedback with user names and optional filters
 $query = "
     SELECT 
         f.id,
@@ -30,6 +42,7 @@ $query = "
         f.created_at
     FROM feedback f
     LEFT JOIN users u ON f.user_id = u.id
+    $filter_condition
     ORDER BY f.created_at DESC
 ";
 
@@ -80,7 +93,47 @@ $result = mysqli_query($conn, $query);
         <h3>Customer Feedback</h3>
         <hr>
 
-        <table class="table table-bordered table-striped mt-4">
+        <!-- Filter Form (same dropdowns as reports.php) -->
+        <form method="GET" class="d-flex align-items-center gap-2 mb-3">
+            <select name="filter_type" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Filter by</option>
+                <option value="weekly" <?= ($filter_type === 'weekly') ? 'selected' : '' ?>>Weekly</option>
+                <option value="monthly" <?= ($filter_type === 'monthly') ? 'selected' : '' ?>>Monthly</option>
+            </select>
+
+            <?php if ($filter_type === 'weekly') : ?>
+                <select name="day" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Select Day</option>
+                    <?php
+                    $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+                    foreach ($days as $d) {
+                        $selected = ($day === $d) ? 'selected' : '';
+                        echo "<option value='$d' $selected>$d</option>";
+                    }
+                    ?>
+                </select>
+            <?php elseif ($filter_type === 'monthly') : ?>
+                <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Select Month</option>
+                    <?php
+                    $months = [
+                        'January','February','March','April','May','June',
+                        'July','August','September','October','November','December'
+                    ];
+                    foreach ($months as $m) {
+                        $selected = ($month === $m) ? 'selected' : '';
+                        echo "<option value='$m' $selected>$m</option>";
+                    }
+                    ?>
+                </select>
+            <?php endif; ?>
+
+            <?php if ($filter_type || $day || $month) : ?>
+                <a href="feedback.php" class="btn btn-sm btn-outline-secondary">Reset</a>
+            <?php endif; ?>
+        </form>
+
+        <table class="table table-bordered table-striped mt-2">
             <thead class="table-dark">
                 <tr>
                     <th>ID</th>
@@ -92,22 +145,26 @@ $result = mysqli_query($conn, $query);
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = mysqli_fetch_assoc($result)) : ?>
-                    <tr>
-                        <td><?= $row['id'] ?></td>
-                        <td><?= $row['firstname'] . ' ' . $row['fullname'] ?></td>
-                        <td><?= $row['rating'] ?>/5</td>
-                        <td><?= htmlspecialchars($row['comment']) ?></td>
-                        <td><?= $row['created_at'] ?></td>
-                        <td>
-                            <a href="?delete=<?= $row['id'] ?>" 
-                               onclick="return confirm('Are you sure you want to delete this feedback?');" 
-                               class="btn btn-sm btn-danger">
-                               🗑️ Delete
-                            </a>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
+                <?php if (mysqli_num_rows($result) > 0): ?>
+                    <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+                        <tr>
+                            <td><?= $row['id'] ?></td>
+                            <td><?= htmlspecialchars($row['firstname'] . ' ' . $row['fullname']) ?></td>
+                            <td><?= $row['rating'] ?>/5</td>
+                            <td><?= htmlspecialchars($row['comment']) ?></td>
+                            <td><?= $row['created_at'] ?></td>
+                            <td>
+                                <a href="?delete=<?= $row['id'] ?>" 
+                                   onclick="return confirm('Are you sure you want to delete this feedback?');" 
+                                   class="btn btn-sm btn-danger">
+                                   🗑️ Delete
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr><td colspan="6" class="text-center">No feedback found for the selected filter.</td></tr>
+                <?php endif; ?>
             </tbody>
         </table>
 
