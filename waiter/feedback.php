@@ -77,6 +77,11 @@ $result = mysqli_query($conn, $query);
             background-color: #fff;
             color: red;
         }
+        /* Align filter form inline */
+        .filter-form select {
+            max-width: 150px;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -97,40 +102,38 @@ $result = mysqli_query($conn, $query);
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3>Customer Feedback</h3>
 
-            <!-- Filter Dropdown -->
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Filter Feedback
-                </button>
-                <ul class="dropdown-menu" style="min-width: 200px;">
-                    <!-- Filter by Rating -->
-                    <li>
-                        <a class="dropdown-item" href="#" onclick="toggleSubmenu('ratingSubmenu')">⭐ Rating ▸</a>
-                        <ul class="list-unstyled ms-3 collapse" id="ratingSubmenu">
-                            <?php for ($r = 1; $r <= 5; $r++): ?>
-                                <li><a class="dropdown-item" href="?filter=rating&value=<?= $r ?>"><?= $r ?> star(s)</a></li>
-                            <?php endfor; ?>
-                        </ul>
-                    </li>
+            <!-- Filter Form like admin reports -->
+            <form method="GET" class="filter-form d-flex align-items-center">
+                <select name="filter" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Filter By</option>
+                    <option value="rating" <?= ($filter === 'rating') ? 'selected' : '' ?>>Rating</option>
+                    <option value="month" <?= ($filter === 'month') ? 'selected' : '' ?>>Month</option>
+                </select>
 
-                    <!-- Filter by Month -->
-                    <li>
-                        <a class="dropdown-item" href="#" onclick="toggleSubmenu('monthSubmenu')">🗓️ Month ▸</a>
-                        <ul class="list-unstyled ms-3 collapse" id="monthSubmenu">
-                            <?php for ($i = 1; $i <= 12; $i++): ?>
-                                <li><a class="dropdown-item" href="?filter=month&value=<?= $i ?>"><?= date("F", mktime(0, 0, 0, $i, 1)) ?></a></li>
-                            <?php endfor; ?>
-                        </ul>
-                    </li>
+                <?php if ($filter === 'rating'): ?>
+                    <select name="value" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Select Rating</option>
+                        <?php for ($r = 1; $r <= 5; $r++): ?>
+                            <option value="<?= $r ?>" <?= ($value == $r) ? 'selected' : '' ?>><?= $r ?> star(s)</option>
+                        <?php endfor; ?>
+                    </select>
+                <?php elseif ($filter === 'month'): ?>
+                    <select name="value" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Select Month</option>
+                        <?php for ($i = 1; $i <= 12; $i++): ?>
+                            <option value="<?= $i ?>" <?= ($value == $i) ? 'selected' : '' ?>><?= date("F", mktime(0, 0, 0, $i, 1)) ?></option>
+                        <?php endfor; ?>
+                    </select>
+                <?php endif; ?>
 
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="feedback.php">Clear Filter</a></li>
-                </ul>
-            </div>
+                <?php if ($filter || $value): ?>
+                    <a href="feedback.php" class="btn btn-sm btn-outline-secondary ms-2">Clear</a>
+                <?php endif; ?>
+            </form>
         </div>
 
         <?php if ($filterLabel): ?>
-            <div class="alert alert-info"><?= $filterLabel ?></div>
+            <div class="alert alert-info"><?= htmlspecialchars($filterLabel) ?></div>
         <?php endif; ?>
 
         <table class="table table-bordered table-striped mt-4">
@@ -175,22 +178,5 @@ $result = mysqli_query($conn, $query);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Dropdown submenu toggling -->
-<script>
-    function toggleSubmenu(id) {
-        const submenu = document.getElementById(id);
-        const isOpen = submenu.classList.contains('show');
-        document.querySelectorAll('.dropdown-menu .collapse').forEach(el => el.classList.remove('show'));
-        if (!isOpen) submenu.classList.add('show');
-    }
-
-    document.addEventListener('click', function (e) {
-        if (!e.target.closest('.dropdown')) {
-            document.querySelectorAll('.dropdown-menu .collapse').forEach(el => el.classList.remove('show'));
-        }
-    });
-</script>
-
 </body>
 </html>

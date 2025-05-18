@@ -15,6 +15,7 @@ $whereClause = '';
 $filterLabel = '';
 
 if ($filter === 'weekly' && $value) {
+    // Escape input to prevent SQL injection
     $day = mysqli_real_escape_string($conn, $value);
     $whereClause = "WHERE DAYNAME(orders.ordered_at) = '$day'";
     $filterLabel = "Showing orders for: $day";
@@ -58,8 +59,10 @@ $result = mysqli_query($conn, $query);
             background-color: #fff;
             color: red;
         }
-        .collapse .dropdown-item {
-            padding-left: 2rem;
+        /* Align filter form inline */
+        .filter-form select {
+            max-width: 150px;
+            margin-right: 10px;
         }
     </style>
 </head>
@@ -81,43 +84,40 @@ $result = mysqli_query($conn, $query);
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>📦 Orders Management</h2>
 
-            <!-- Filter Dropdown -->
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="filterMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                    Filter Orders
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="filterMenu" style="min-width: 220px;">
-                    <!-- Weekly Section -->
-                    <li>
-                        <a class="dropdown-item" href="#" onclick="toggleSubmenu('weeklySubmenu')">📅 Weekly ▸</a>
-                        <ul class="list-unstyled ms-3 collapse" id="weeklySubmenu">
-                            <?php
-                            $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-                            foreach ($days as $day):
-                            ?>
-                                <li><a class="dropdown-item" href="?filter=weekly&value=<?= $day ?>"><?= $day ?></a></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </li>
+            <!-- Filter Form -->
+            <form method="GET" class="filter-form d-flex align-items-center">
+                <select name="filter" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Filter By</option>
+                    <option value="weekly" <?= ($filter === 'weekly') ? 'selected' : '' ?>>Weekly (Day)</option>
+                    <option value="monthly" <?= ($filter === 'monthly') ? 'selected' : '' ?>>Monthly</option>
+                </select>
 
-                    <!-- Monthly Section -->
-                    <li>
-                        <a class="dropdown-item" href="#" onclick="toggleSubmenu('monthlySubmenu')">🗓️ Monthly ▸</a>
-                        <ul class="list-unstyled ms-3 collapse" id="monthlySubmenu">
-                            <?php for ($i = 1; $i <= 12; $i++): ?>
-                                <li><a class="dropdown-item" href="?filter=monthly&value=<?= $i ?>"><?= date("F", mktime(0, 0, 0, $i, 1)) ?></a></li>
-                            <?php endfor; ?>
-                        </ul>
-                    </li>
+                <?php if ($filter === 'weekly'): ?>
+                    <select name="value" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Select Day</option>
+                        <?php
+                        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                        foreach ($days as $day): ?>
+                            <option value="<?= $day ?>" <?= ($value === $day) ? 'selected' : '' ?>><?= $day ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php elseif ($filter === 'monthly'): ?>
+                    <select name="value" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Select Month</option>
+                        <?php for ($i = 1; $i <= 12; $i++): ?>
+                            <option value="<?= $i ?>" <?= ($value == $i) ? 'selected' : '' ?>><?= date("F", mktime(0, 0, 0, $i, 1)) ?></option>
+                        <?php endfor; ?>
+                    </select>
+                <?php endif; ?>
 
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="order.php">Clear Filter</a></li>
-                </ul>
-            </div>
+                <?php if ($filter || $value): ?>
+                    <a href="order.php" class="btn btn-sm btn-outline-secondary ms-2">Clear</a>
+                <?php endif; ?>
+            </form>
         </div>
 
         <?php if ($filterLabel): ?>
-            <div class="alert alert-info"><?= $filterLabel ?></div>
+            <div class="alert alert-info"><?= htmlspecialchars($filterLabel) ?></div>
         <?php endif; ?>
 
         <table class="table table-bordered table-hover">
@@ -164,22 +164,6 @@ $result = mysqli_query($conn, $query);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Toggle logic for submenus -->
-<script>
-    function toggleSubmenu(id) {
-        const submenu = document.getElementById(id);
-        const isVisible = submenu.classList.contains('show');
-        document.querySelectorAll('.dropdown-menu .collapse').forEach(el => el.classList.remove('show'));
-        if (!isVisible) submenu.classList.add('show');
-    }
-
-    document.addEventListener('click', function (e) {
-        if (!e.target.closest('.dropdown')) {
-            document.querySelectorAll('.dropdown-menu .collapse').forEach(el => el.classList.remove('show'));
-        }
-    });
-</script>
 
 </body>
 </html>
