@@ -7,6 +7,54 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'staff') {
     exit();
 }
 
+// Function to generate a unique receipt code
+function generateReceiptCode($conn) {
+    do {
+        $code = strtoupper('RCPT-' . bin2hex(random_bytes(4)));
+        // Check if code already exists in any order
+        $check = mysqli_query($conn, "SELECT id FROM orders WHERE receipt = '$code'");
+    } while (mysqli_num_rows($check) > 0);
+    return $code;
+}
+
+// Handle POST request for updating order status
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
+    $orderId = intval($_POST['order_id']);
+    $newStatus = mysqli_real_escape_string($conn, $_POST['new_status']);
+
+    // If status is 'done' and no receipt code assigned yet, generate one
+    if ($newStatus === 'done') {
+        // Fetch current receipt for this order
+        $result = mysqli_query($conn, "SELECT receipt FROM orders WHERE id = $orderId");
+        $row = mysqli_fetch_assoc($result);
+        
+        $receiptCode = $row['receipt'];
+        if (empty($receiptCode)) {
+            $receiptCode = generateReceiptCode($conn);
+        }
+
+        // Update order_status and assign receipt code
+        $updateQuery = "UPDATE orders SET order_status = '$newStatus', receipt = '$receiptCode' WHERE id = $orderId";
+        mysqli_query($conn, $updateQuery);
+    } else {
+        // For other statuses just update the status (and optionally clear receipt if cancelled)
+        $updateQuery = "UPDATE orders SET order_status = '$newStatus'";
+        if ($newStatus === 'cancelled') {
+            $updateQuery .= ", receipt = NULL";
+        }
+        $updateQuery .= " WHERE id = $orderId";
+        mysqli_query($conn, $updateQuery);
+    }
+
+    // Redirect to avoid form resubmission
+    $redirectURL = "order.php";
+    if (!empty($_GET['filter']) && !empty($_GET['value'])) {
+        $redirectURL .= "?filter=" . urlencode($_GET['filter']) . "&value=" . urlencode($_GET['value']);
+    }
+    header("Location: $redirectURL");
+    exit();
+}
+
 // Filtering logic
 $filter = $_GET['filter'] ?? '';
 $value = $_GET['value'] ?? '';
@@ -15,7 +63,6 @@ $whereClause = '';
 $filterLabel = '';
 
 if ($filter === 'weekly' && $value) {
-    // Escape input to prevent SQL injection
     $day = mysqli_real_escape_string($conn, $value);
     $whereClause = "WHERE DAYNAME(orders.ordered_at) = '$day'";
     $filterLabel = "Showing orders for: $day";
@@ -59,7 +106,6 @@ $result = mysqli_query($conn, $query);
             background-color: #fff;
             color: red;
         }
-        /* Align filter form inline */
         .filter-form select {
             max-width: 150px;
             margin-right: 10px;
@@ -76,7 +122,7 @@ $result = mysqli_query($conn, $query);
         <a href="order.php" class="active">📦 Orders</a>
         <a href="menu.php">🍽️ Menu</a>
         <a href="feedback.php">💬 Feedback</a>
-        <a href="logout.php" class="text-danger">🔒 Logout</a>
+        <a href="logout.php" class="text-danger">🔒 Logout</a>  
     </div>
 
     <!-- Main content -->
@@ -129,6 +175,7 @@ $result = mysqli_query($conn, $query);
                     <th>Total Price</th>
                     <th>Status</th>
                     <th>Ordered At</th>
+                    <th>Receipt Code</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -142,6 +189,7 @@ $result = mysqli_query($conn, $query);
                         <td>₱<?= number_format($row['total_price'], 2) ?></td>
                         <td><span class="badge bg-info"><?= ucfirst($row['order_status']) ?></span></td>
                         <td><?= $row['ordered_at'] ?></td>
+                        <td><?= htmlspecialchars($row['receipt'] ?? '') ?></td>
                         <td>
                             <form method="POST" class="d-flex mb-1">
                                 <input type="hidden" name="order_id" value="<?= $row['order_id'] ?>">
@@ -156,7 +204,7 @@ $result = mysqli_query($conn, $query);
                     </tr>
                 <?php endwhile; ?>
             <?php else: ?>
-                <tr><td colspan="7" class="text-center">No orders found.</td></tr>
+                <tr><td colspan="8" class="text-center">No orders found.</td></tr>
             <?php endif; ?>
             </tbody>
         </table>
@@ -164,6 +212,5 @@ $result = mysqli_query($conn, $query);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>
