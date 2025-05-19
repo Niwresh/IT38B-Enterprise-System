@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'add') {
         $image = 'https://via.placeholder.com/60';
     }
 
-    mysqli_query($conn, "INSERT INTO menu_items (name, description, price, available, stock_quantity, image)
+    mysqli_query($conn, "INSERT INTO menu_items (name, description, price, available, stock_quantity, image_url)
         VALUES ('$name', '$desc', $price, $available, $stock_quantity, '$image')");
     header("Location: inventory.php");
     exit();
